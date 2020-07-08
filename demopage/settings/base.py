@@ -52,6 +52,7 @@ INSTALLED_APPS = [
     "grapple",
     "graphene_django",
     "channels",
+
 ]
 
 MIDDLEWARE = [

@@ -10,6 +10,8 @@ from wagtail.embeds import blocks as embedsblocks
 from wagtail.admin.edit_handlers import StreamFieldPanel, FieldPanel
 from wagtail.snippets.models import register_snippet
 
+import uuid
+
 from grapple.models import (
     GraphQLInt,
     GraphQLBoolean,
@@ -20,6 +22,7 @@ from grapple.models import (
     GraphQLSnippet,
     GraphQLEmbed,
     GraphQLStreamfield,
+    GraphQLForeignKey,
 )
 from grapple.helpers import register_streamfield_block
 
@@ -31,102 +34,17 @@ class Snippet(models.Model):
 
 
 #Headers
-
-@register_streamfield_block
-class _H_BannerBlock(blocks.StructBlock):
-    autofield = models.AutoField()
-    bigautofield = models.BigAutoField()
-    bigintegerfield = models.BigIntegerField()
-    binaryfield = models.BinaryField()
-
-    graphql_fields = [
-        GraphQLInt("autofield"),
-        GraphQLInt("bigautofield"),
-        GraphQLInt("bigintegerfield"),
-        GraphQLInt("binaryfield"),
-    ]
-
     
-@register_streamfield_block
-class _H_HeadLineBlock(blocks.StructBlock):
-    booleanfield = models.BooleanField()
-    charfield = models.CharField()
-    datefield = models.DateField()
-    datetimefield = models.DateTimeField()
-
-    graphql_fields = [
-        GraphQLBoolean("booleanfield"),
-        GraphQLString("charfield"),
-        GraphQLString("datefield"),
-        GraphQLString("datetimefield"),
-    ]
 
 #Sections
 
 @register_streamfield_block
-class _S_MainSectionBlock(blocks.StructBlock):
-    decimalfield = models.DecimalField()
-    durationfield = models.DurationField()
-    emailfield = models.EmailField()
-    filefield = models.FileField()
-    filepathfield = models.FilePathField()
-
-    graphql_fields = [
-        GraphQLFloat("decimalfield"),
-        GraphQLString("durationfield"),
-        GraphQLString("emailfield"),
-        # Dunno what Grapple Model to use for file type
-        GraphQLString("filepathfield"),
-    ]
-
-
-@register_streamfield_block
-class _S_SideSectionBlock(blocks.StructBlock):
-    floatfield = models.FloatField()
-    imagefield = models.ImageField()
-    integerfield = models.IntegerField()
-    genericipaddressfield = models.GenericIPAddressField()
-    nullbooleanfield = models.NullBooleanField()
-
-    graphql_fields = [
-        GraphQLFloat("floatfield"),
-        GraphQLImage("imagefield"),
-        GraphQLInt("integerfield"),
-        GraphQLString("genericipaddressfield"),
-        GraphQLBoolean("nullbooleanfield"),
-    ]
-
-
-@register_streamfield_block
-class _S_CoffeBlock(blocks.StructBlock):
-    positiveintegerfield = models.PositiveIntegerField()
-    positivesmallintegerfield = models.SmallIntegerField()
-    slugfield = models.SlugField()
-#   smallautofield = models.SmallAutoField()
-    smallintegerfield = models.SmallIntegerField()
-    textfield = models.TextField()
-
-    graphql_fields = [
-        GraphQLInt("positiveintegerfield"),
-        GraphQLString("slugfield"),
-        GraphQLInt("smallintegerfield"),
-        GraphQLString("textfield"),
-    ]
-
-
-@register_streamfield_block
 class _S_SmallBlock(blocks.StructBlock):
-    timefield = models.TimeField()
-    urlfield = models.URLField()
-    uuidfield = models.UUIDField()
     charblock = blocks.CharBlock()
     textblock = blocks.TextBlock()
     emailblock = blocks.EmailBlock()
 
     graphql_fields = [
-        GraphQLString("timefield"),
-        GraphQLString("urlfield"),
-        GraphQLString("uuidfield"),
         GraphQLString("charblock"),
         GraphQLString("textblock"),
         GraphQLString("emailblock"),
@@ -160,9 +78,11 @@ class _S_TallBlock(blocks.StructBlock):
     richtextblock = blocks.RichTextBlock()
     rawhtmlblock = blocks.RawHTMLBlock()
     blockquoteblock = blocks.BlockQuoteBlock()
-#??  choiceblock = blocks.ChoiceBlock()
-#    multiplechoiceblock = blocks.MultipleChoiceBlock()
-#??  pagechooserblock = blocks.PageChooserBlock()
+    choiceblock = blocks.ChoiceBlock(choices=[
+        ('apples', 'Apple'),
+        ('bananas', 'Bananas'),
+    ])
+#    pagechooserblock = blocks.PageChooserBlock()
 
     graphql_fields = [
         GraphQLString("timeblock"),
@@ -170,8 +90,8 @@ class _S_TallBlock(blocks.StructBlock):
         GraphQLString("richtextblock"),
         GraphQLString("rawhtmlblock"),
         GraphQLString("blockquoteblock"),
-        #GraphQLString("choiceblock"), #??
-        #dunno what to use for the pagechooserblock
+        GraphQLString("choiceblock"),
+#        GraphQLForeignKey("pagechooserblock", content_type="page"),
     ]
 
 @register_streamfield_block
@@ -183,8 +103,8 @@ class _S_LightBlock(blocks.StructBlock):
     staticblock = blocks.StaticBlock()
 
     graphql_fields = [
-        GraphQLDocument("documentchooserblock"), #??
-        GraphQLImage("imagechooserblock"), #??
+        GraphQLDocument("documentchooserblock"),
+        GraphQLImage("imagechooserblock"),
         GraphQLSnippet("snippetchooserblock", snippet_model='home.Snippet'), #??
         GraphQLEmbed("embedblock"),
         GraphQLString("staticblock"),
@@ -194,14 +114,35 @@ class _S_LightBlock(blocks.StructBlock):
 
 #Pages
 class HomePage(Page):
-    headers = fields.StreamField([
-        ('h_bannerblock', _H_BannerBlock()),
-        ('h_headlineblock', _H_HeadLineBlock()),
-    ], null=True, blank=False)
+
+#    autofield = models.AutoField()
+#    bigautofield = models.BigAutoField()
+    bigintegerfield = models.BigIntegerField(blank=False, null=True)
+#    binaryfield = models.BinaryField()
+    booleanfield = models.BooleanField(blank=False, null=True)
+    charfield = models.CharField(max_length=22,blank=False, null=True)
+    datefield = models.DateField(blank=False, null=True)
+    datetimefield = models.DateTimeField(blank=False, null=True)
+    decimalfield = models.DecimalField(decimal_places=5, max_digits=22,blank=False, null=True)
+    durationfield = models.DurationField(blank=False, null=True)
+    emailfield = models.EmailField(blank=False, null=True)
+    filefield = models.FileField(blank=False, null=True)
+#    filepathfield = models.FilePathField(blank=False, null=True)
+    floatfield = models.FloatField(blank=False, null=True)
+    imagefield = models.ImageField(blank=False, null=True)
+    integerfield = models.IntegerField(blank=False, null=True)
+    genericipaddressfield = models.GenericIPAddressField(blank=False, null=True)
+    nullbooleanfield = models.NullBooleanField(blank=False, null=True)
+    positiveintegerfield = models.PositiveIntegerField(blank=False, null=True)
+    positivesmallintegerfield = models.SmallIntegerField(blank=False, null=True)
+    slugfield = models.SlugField(blank=False, null=True)
+    smallintegerfield = models.SmallIntegerField(blank=False, null=True)
+    textfield = models.TextField(blank=False, null=True)
+    timefield = models.TimeField(blank=False, null=True)
+    urlfield = models.URLField(blank=False, null=True)
+    uuidfield = models.UUIDField(blank=False, null=True, default=uuid.uuid4)
+
     sections = fields.StreamField([
-        ('s_mainsection', _S_MainSectionBlock()),
-        ('s_sidesection', _S_SideSectionBlock()),
-        ('s_coffeblock', _S_CoffeBlock()),
         ('s_smallblock', _S_SmallBlock()),
         ('s_bigblock', _S_BigBlock()),
         ('s_tallblock', _S_TallBlock()),
@@ -209,13 +150,60 @@ class HomePage(Page):
     ], null=True, blank=False)
 
     main_content_panels = [
-      StreamFieldPanel('headers'),
-      StreamFieldPanel('sections')
+      FieldPanel('bigintegerfield'),
+      FieldPanel('booleanfield'),
+      FieldPanel('charfield'),
+      FieldPanel('datefield'),
+      FieldPanel('datetimefield'),
+      FieldPanel('decimalfield'),
+      FieldPanel('durationfield'),
+      FieldPanel('emailfield'),
+#      FieldPanel('filefield'),
+#      FieldPanel('filepathfield'),
+      FieldPanel('floatfield'),
+#      FieldPanel('imagefield'),
+      FieldPanel('integerfield'),
+      FieldPanel('genericipaddressfield'),
+      FieldPanel('nullbooleanfield'),
+      FieldPanel('positiveintegerfield'),
+      FieldPanel('positivesmallintegerfield'),
+      FieldPanel('slugfield'),
+      FieldPanel('smallintegerfield'),
+      FieldPanel('textfield'),
+      FieldPanel('timefield'),
+      FieldPanel('urlfield'),
+      FieldPanel('uuidfield'),
+      StreamFieldPanel('sections'),
     ]
 
     graphql_fields = [
-        GraphQLStreamfield("headers"),
+#        GraphQLInt("autofield"),
+#        GraphQLInt("bigautofield"),
+        GraphQLInt("bigintegerfield"),
+#        GraphQLInt("binaryfield"),
+        GraphQLBoolean("booleanfield"),
+        GraphQLString("charfield"),
+        GraphQLString("datefield"),
+        GraphQLString("datetimefield"),
+        GraphQLFloat("decimalfield"),
+        GraphQLString("durationfield"),
+        GraphQLString("emailfield"),
+#        GraphQLGenericScala("filefield"),
+        GraphQLString("filepathfield"),
+        GraphQLFloat("floatfield"),
+#        GraphQLGenericScala("imagefield"),
+        GraphQLInt("integerfield"),
+        GraphQLString("genericipaddressfield"),
+        GraphQLBoolean("nullbooleanfield"),
+        GraphQLInt("positiveintegerfield"),
+        GraphQLString("slugfield"),
+        GraphQLInt("smallintegerfield"),
+        GraphQLString("textfield"),
+        GraphQLString("timefield"),
+        GraphQLString("urlfield"),
+        GraphQLString("uuidfield"),
         GraphQLStreamfield("sections"),
+        GraphQLInt('positivesmallintegerfield'),
     ]
 
     content_panels = Page.content_panels + main_content_panels
